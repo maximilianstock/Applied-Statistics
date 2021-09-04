@@ -587,7 +587,7 @@ plot8
 The purpose of this exercise is to reproduce a plot using your `dplyr` and `ggplot2` skills. Read the  article [The Racial Factor: There's 77 Counties Which Are Deep Blue But Also Low-Vaxx. Guess What They Have In Common?](https://acasignups.net/21/07/18/racial-factor-theres-77-counties-which-are-deep-blue-also-low-vaxx-guess-what-they-have) and have a look at the attached figure.
 
 ```{r challenge1, echo=FALSE, out.width="90%", warning = FALSE}
-knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_county_070321_1.jpeg"), error = FALSE)
+knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_county_070321_1.jpg"), error = FALSE)
 ```
 
 
@@ -741,7 +741,7 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
          )
 ```
 
-```{r visualize_german_election_polls, warning = FALSE}
+```{r visualize_german_election_polls, warning = FALSE, echo=FALSE,results='hide',fig.keep='all'}
 
 plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+
   geom_point(aes(y = union), color = "black", alpha = 0.3)+ 
