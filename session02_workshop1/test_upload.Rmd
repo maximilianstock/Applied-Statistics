@@ -13,7 +13,7 @@ output:
 ---
 
 
-```{r, setup, echo=FALSE}
+```{r, setup, warning = FALSE, echo=FALSE}
 knitr::opts_chunk$set(
   message = FALSE, 
   warning = FALSE, 
@@ -52,7 +52,7 @@ library(rvest) # to scrape wikipedia page
 Back in 2014, [fivethiryeight.com](https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/) published an article on alchohol consumption in different countries. The data `drinks` is available as part of the `fivethirtyeight` package. Make sure you have installed the `fivethirtyeight` package before proceeding.
 
 
-```{r, load_alcohol_data}
+```{r, warning = FALSE, load_alcohol_data}
 library(fivethirtyeight)
 data(drinks)
 
@@ -65,7 +65,7 @@ alcohol_direct <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/da
 
 What are the variable types? Any missing values we should worry about? 
 
-```{r glimpse_skim_data}
+```{r glimpse_skim_data, warning = FALSE}
 glimpse(alcohol_direct
         )
 skim(alcohol_direct)
@@ -75,7 +75,7 @@ skim(alcohol_direct)
 
 Make a plot that shows the top 25 beer consuming countries
 
-```{r beer_plot}
+```{r beer_plot, warning = FALSE}
 # YOUR CODE GOES HERE
 p <- alcohol_direct %>%
   slice_max(order_by = beer_servings, n = 25)
@@ -89,7 +89,7 @@ ggplot(p, aes(y=fct_reorder(country,beer_servings), x=beer_servings))+
 
 Make a plot that shows the top 25 wine consuming countries
 
-```{r wine_plot}
+```{r wine_plot, warning = FALSE}
 
 p2 <- alcohol_direct %>%
   slice_max(order_by = wine_servings, n = 25)
@@ -103,7 +103,7 @@ ggplot(p2, aes(y=fct_reorder(country,wine_servings), x=wine_servings))+
 ```
 
 Finally, make a plot that shows the top 25 spirit consuming countries
-```{r spirit_plot}
+```{r spirit_plot, warning = FALSE}
 # YOUR CODE GOES HERE
 p3 <- alcohol_direct %>%
   slice_max(order_by = spirit_servings, n = 25)
@@ -128,7 +128,7 @@ In general, there tends to be no overlap among countries with regards to the top
 We will look at a subset sample of movies, taken from the [Kaggle IMDB 5000 movie dataset](https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset)
 
   
-```{r load_movies}
+```{r load_movies, warning = FALSE}
 
 movies <- read_csv(here::here("data", "movies.csv"))
 glimpse(movies)
@@ -148,7 +148,7 @@ Besides the obvious variables of `title`, `genre`, `director`, `year`, and `dura
 
 - Are there any missing values (NAs)? Are all entries distinct or are there duplicate entries?
 
-```{r missing_values}
+```{r missing_values, warning = FALSE}
 skim(movies)
 ```
 There are no missing values, however, there are duplicate values for some variables. What is especially interesting, is that there are duplicate Titles for movies. This can be observed through looking at n_unique: Even though there are a total of 2961 records, there only seem to be 2907 unique movie titles.
@@ -158,7 +158,7 @@ There are no missing values, however, there are duplicate values for some variab
 
 - Produce a table with the count of movies by genre, ranked in descending order
 
-```{r count2}
+```{r count2, warning = FALSE}
 count3<-movies%>%
   group_by(genre)%>%
   count(sort=TRUE)%>%
@@ -168,7 +168,7 @@ count3
 ```
 
 - Produce a table with the average gross earning and budget (`gross` and `budget`) by genre. Calculate a variable `return_on_budget` which shows how many $ did a movie make at the box office for each $ of its budget. Ranked genres by this `return_on_budget` in descending order
-```{r avg_gross_earning}
+```{r avg_gross_earning, warning = FALSE}
 avgGenre <- movies%>%
   group_by(genre)%>%
   summarise(mean(gross), mean(budget))%>%
@@ -187,7 +187,7 @@ avgGenre
 
 - Produce a table that shows the top 15 directors who have created the highest gross revenue in the box office. Don't just show the total gross amount, but also the mean, median, and standard deviation per director.
 
-```{r topDirectors}
+```{r topDirectors, warning = FALSE}
 topDirectors <- movies%>%
   group_by(director)%>%
   summarise(total_gross = sum(gross), avg_gross = mean(gross), median_gross = median(gross), sd_gross = sd(gross))%>%
@@ -198,7 +198,7 @@ topDirectors
 
 - Finally, ratings. Produce a table that describes how ratings are distributed by genre. We don't want just the mean, but also, min, max, median, SD and some kind of a histogram or density graph that visually shows how ratings are distributed. 
 
-```{r ratings}
+```{r ratings, warning = FALSE}
 ratings <- movies%>%
   group_by(genre)%>%
   summarise(avg_rating = mean(rating), min_rating = min(rating), max_rating = max(rating), median_rating = median(rating), sd_rating = sd(rating))%>%
@@ -225,7 +225,7 @@ rating_by_genre
   - Examine the relationship between `gross` and `cast_facebook_likes`. Produce a scatterplot and write one sentence discussing whether the number of facebook likes that the cast has received is likely to be a good predictor of how much money a movie will make at the box office. What variable are you going to map to the Y- and X- axes?
   
   
-```{r, gross_on_fblikes}
+```{r, gross_on_fblikes, warning = FALSE}
 all_scatter_likes <- ggplot(movies, aes(x=cast_facebook_likes, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
@@ -254,7 +254,7 @@ From the trendline and correlation coefficient of 0.28 one can observe that ther
 
   - Examine the relationship between `gross` and `budget`. Produce a scatterplot and write one sentence discussing whether budget is likely to be a good predictor of how much money a movie will make at the box office.
 
-```{r, gross_on_budget}
+```{r, gross_on_budget, warning = FALSE}
 all_scatter_budget <- ggplot(movies, aes(x=budget, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
@@ -268,7 +268,7 @@ all_scatter_budget
   
   - Examine the relationship between `gross` and `rating`. Produce a scatterplot, faceted by `genre` and discuss whether IMDB ratings are likely to be a good predictor of how much money a movie will make at the box office. Is there anything strange in this dataset?
 
-```{r, gross_on_rating}
+```{r, gross_on_rating, warning = FALSE}
 all_scatter_rating <- ggplot(movies, aes(x=rating, y=gross))+
   geom_point(aes(color=genre), size=0.5)+
   ylim(0,750000000)+
@@ -290,13 +290,13 @@ We will use the `tidyquant` package to download historical data of stock prices,
 We must first identify which stocks we want to download data for, and for this we must know their ticker symbol; Apple is known as AAPL, Microsoft as MSFT, McDonald's as MCD, etc. The file `nyse.csv` contains 508 stocks listed on the NYSE, their ticker `symbol`, `name`, the IPO  (Initial Public Offering) year, and the sector and industry the company is in.
 
 
-```{r load_nyse_data, message=FALSE, warning=FALSE}
+```{r load_nyse_data, message=FALSE, warning=FALSE, warning = FALSE}
 nyse <- read_csv(here::here("data","nyse.csv"))
 ```
 
 Based on this dataset, create a table and a bar plot that shows the number of companies per sector, in descending order
 
-```{r companies_per_sector}
+```{r companies_per_sector, warning = FALSE}
 
 # YOUR CODE GOES HERE
 sector<-nyse%>%
@@ -364,7 +364,7 @@ myStocks_returns_annual <- myStocks %>%
 
 Create a table where you summarise monthly returns for each of the stocks and `SPY`; min, max, median, mean, SD.
 
-```{r summarise_monthly_returns}
+```{r summarise_monthly_returns, warning = FALSE}
 
 # YOUR CODE GOES HERE
 summary_monthly<-myStocks_returns_monthly%>%
@@ -375,7 +375,7 @@ summary_monthly
 
 
 Plot a density plot, using `geom_density()`, for each of the stocks
-```{r density_monthly_returns}
+```{r density_monthly_returns, warning = FALSE}
 
 # YOUR CODE GOES HERE
 density<-ggplot(myStocks_returns_monthly, aes(x=monthly_returns))+
@@ -395,7 +395,7 @@ Looking at the x axis, one can also observe a large difference in the range of m
 
 Finally, make a plot that shows the expected monthly return (mean) of a stock on the Y axis and the risk (standard deviation) in the X-axis. Please use `ggrepel::geom_text_repel()` to label each stock
 
-```{r risk_return_plot}
+```{r risk_return_plot, warning = FALSE}
 # YOUR CODE GOES HERE
 scatter_return_volatility <- ggplot(summary_monthly, aes(x=sd_return, y=avg_return, label=symbol))+
   geom_point()+
@@ -418,7 +418,7 @@ For this task, you will analyse a data set on Human Resoruce Analytics. The [IBM
 
 First let us load the data
 
-```{r}
+```{r load hrData, warning = FALSE}
 
 hr_dataset <- read_csv(here::here("data", "datasets_1067_1925_WA_Fn-UseC_-HR-Employee-Attrition.csv"))
 glimpse(hr_dataset)
@@ -428,7 +428,7 @@ glimpse(hr_dataset)
 I am going to clean the data set, as variable names are in capital letters, some variables are not really necessary, and some variables, e.g., `education` are given as a number rather than a more useful description
 
 
-```{r}
+```{r cleanHRData, warning = FALSE}
 
 hr_cleaned <- hr_dataset %>% 
   clean_names() %>% 
@@ -480,7 +480,7 @@ Produce a one-page summary describing this dataset. Here is a non-exhaustive lis
 
 1. How often do people leave the company (`attrition`)
 
-```{r attrition}
+```{r attrition, warning = FALSE}
 numberz<-hr_cleaned%>%
   group_by(attrition)%>%
   summarize(part = count(attrition))%>%
@@ -496,7 +496,7 @@ Looking at the sheer counts of YES and NO entries for the attrition coloumn, aro
 2. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics? 
 
 
-```{r age_years_income_promotion}
+```{r age_years_income_promotion, warning = FALSE}
 n<-length(hr_cleaned$age) 
 pic_data<-data.frame(cbind(c(hr_cleaned$age,hr_cleaned$monthly_income, 
                   hr_cleaned$years_since_last_promotion), 
@@ -514,7 +514,7 @@ distribution
 
 3. How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
 
-```{r satis_wlb}
+```{r satis_wlb, warning = FALSE}
 hr_satis <- hr_cleaned %>% 
   group_by(job_satisfaction) %>% 
   count(sort=TRUE) %>% 
@@ -530,7 +530,7 @@ work_life_satis
 
 4. Is there any relationship between monthly income and education? Monthly income and gender?
 
-```{r income_education}
+```{r income_education, warning = FALSE}
 plot1 <- ggplot(hr_cleaned, aes(y=monthly_income, x = education))+ 
   geom_boxplot() 
 plot1 
@@ -543,7 +543,7 @@ plot2
 
 5. Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
 
-```{r income_vs_job}
+```{r income_vs_job, warning = FALSE}
 income_vs_job <- ggplot(hr_cleaned, aes(x=reorder(job_role, -monthly_income, na.rm = TRUE), y=monthly_income)) + 
   geom_boxplot()+
   labs(y="Monthly Income", x = "Job", title = "Income Distribution By Job")+
@@ -557,7 +557,7 @@ income_vs_job
 
 6. Calculate and plot a bar chart of the mean (or median?) income by education level.
 
-```{r bar_income_edu}
+```{r bar_income_edu, warning = FALSE}
 
 ggplo <- ggplot(hr_cleaned, aes(x=edu))
 
@@ -565,7 +565,7 @@ ggplo <- ggplot(hr_cleaned, aes(x=edu))
 
 
 7. Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
-```{r dist_income_education}
+```{r dist_income_education, warning = FALSE}
 plot7 <- hr_cleaned %>%  
   group_by(education) %>%  
   ggplot(aes(x=monthly_income))+ 
@@ -575,7 +575,7 @@ plot7
 ```
 
 8. Plot income vs age, faceted by `job_role`
-```{r income_age_job}
+```{r income_age_job, warning = FALSE}
 plot8 <- ggplot(hr_cleaned, aes(x=age, y=monthly_income))+ 
   geom_point(size=0.1)+ 
   geom_smooth(method = "lm")+ 
@@ -586,7 +586,7 @@ plot8
 
 The purpose of this exercise is to reproduce a plot using your `dplyr` and `ggplot2` skills. Read the  article [The Racial Factor: There's 77 Counties Which Are Deep Blue But Also Low-Vaxx. Guess What They Have In Common?](https://acasignups.net/21/07/18/racial-factor-theres-77-counties-which-are-deep-blue-also-low-vaxx-guess-what-they-have) and have a look at the attached figure.
 
-```{r challenge1, echo=FALSE, out.width="90%"}
+```{r challenge1, echo=FALSE, out.width="90%", warning = FALSE}
 knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_county_070321_1.jpeg"), error = FALSE)
 ```
 
@@ -601,7 +601,7 @@ Some hints to get you started:
  
 
 
-```{r, echo=FALSE, cache=TRUE}
+```{r loadCountyData, echo=FALSE, cache=TRUE, warning = FALSE}
 
 # Download CDC vaccination by county
 cdc_url <- "https://data.cdc.gov/api/views/8xkx-amqh/rows.csv?accessType=DOWNLOAD"
@@ -636,7 +636,7 @@ population <- vroom(population_url) %>%
 skim(population)
 ```
 
-```{r}
+```{r cleanCountryData, warning = FALSE}
 #as there are multiple dates for vacc statuses, and we are only interested in the most recent one, we can do some cleaning. Data from Sep. 3rd, 2021, seems to be most recent.
 
 vaccinations_recent <- vaccinations %>%
@@ -649,7 +649,7 @@ elections_perc <- election2020_results%>%
 ```
 
 
-```{r join_by_fips}
+```{r join_by_fips, warning = FALSE}
 #We decide to just join coloumn series_complete_pop_pct from the vacc dataset, as this should suffice to recreate the graph. We also rename the coloumns to make their names a little more easy on the tongue.
 
 joined_frame <- inner_join(population, vaccinations_recent[,c("fips", "series_complete_pop_pct") ], by = "fips")%>%
@@ -665,7 +665,8 @@ joined_frame <- inner_join(joined_frame, elections_perc[,c("fips", "candidate", 
 
 head(joined_frame) #we can have a look at the dataset. It looks like we have all the data we need for visualization
 ```
-```{r visualize_election_vacc_pop}
+
+```{r visualize_election_vacc_pop, warning = FALSE}
 plot_counties <- ggplot(joined_frame, aes(x=perc_votes_total, vacc_perc))+
   geom_rect(aes(xmin = 0, xmax = 0.45, ymin = 0, ymax = 100), fill = "#A6A8FB")+
   geom_rect(aes(xmin = 0.45, xmax = 0.55, ymin = 0, ymax = 100), fill = "#D2A6D2")+
@@ -740,7 +741,7 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
          )
 ```
 
-```{r visualize_german_election_polls}
+```{r visualize_german_election_polls, warning = FALSE}
 
 plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+
   geom_point(aes(y = union), color = "black", alpha = 0.3)+ 
