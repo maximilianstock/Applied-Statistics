@@ -743,8 +743,8 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
 ```{r visualize_german_election_polls}
 
 plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+
-  geom_point(aes(y = union), color = "black", alpha = 0.3)+
-  geom_line(aes(y=rollmean(union, 14, na.pad=TRUE)), color = "black")+
+  geom_point(aes(y = union), color = "black", alpha = 0.3)+ 
+  geom_line(aes(y=rollmean(union, 14, na.pad=TRUE)), color = "black")+ #we add a line representing the rolling average of values for the past 14 days. We also adjust the padding for enhancing visualization.
   
   geom_point(aes(y = spd), color = "red", alpha = 0.3)+
   geom_line(aes(y=rollmean(spd, 14, na.pad=TRUE)), color = "red")+
@@ -761,7 +761,7 @@ plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+
   geom_point(aes(y=linke), color = "darkred", alpha = 0.3)+
   geom_line(aes(y=rollmean(linke, 14, na.pad = TRUE)), color = "darkred")+
   
-  labs(x="Poll Date", y="Voting Percentage", title = "German Elections", subtitle = "Change in estimated voting during 2021")
+  labs(x="2021 Poll Month", y="Voting Percentage", title = "German Elections", subtitle = "Change in estimated voting during 2021")
   theme_bw()
  
 plot_election_polls
