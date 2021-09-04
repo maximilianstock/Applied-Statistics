@@ -128,7 +128,7 @@ In general, there tends to be no overlap among countries with regards to the top
 We will look at a subset sample of movies, taken from the [Kaggle IMDB 5000 movie dataset](https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset)
 
   
-```{r,load_movies, warning=FALSE, message=FALSE, eval=FALSE}
+```{r load_movies}
 
 movies <- read_csv(here::here("data", "movies.csv"))
 glimpse(movies)
@@ -761,6 +761,7 @@ plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+
   geom_point(aes(y=linke), color = "darkred", alpha = 0.3)+
   geom_line(aes(y=rollmean(linke, 14, na.pad = TRUE)), color = "darkred")+
   
+  labs(x="Poll Date", y="Voting Percentage", title = "German Elections", subtitle = "Change in estimated voting during 2021")
   theme_bw()
  
 plot_election_polls
