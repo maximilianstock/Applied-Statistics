@@ -30,6 +30,7 @@ knitr::opts_chunk$set(
 
 ```{r load-libraries, warning=FALSE, message=FALSE, echo=FALSE}
 library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(scales)
 library(mosaic)
 library(ggthemes)
 library(lubridate)
@@ -113,7 +114,7 @@ ggplot(spirit_consumtion, aes(y=fct_reorder(country,spirit_servings), x=spirit_s
 
 -   What can you infer from these plots? Don't just explain what's in the graph, but speculate or tell a short story (1-2 paragraphs max).
 
-*In general, there tends to be no overlap among countries with regards to the top spots in alcohol consumption, i.e. the top beer consuming countries are not the top wine consuming countries. It is surprising that Germany is only ranked \#4 in the top beer consuming countries, after Namibia, Czech Republic and Gabon. A quick research on the reason for Namibia's high beer consumption hint at its former colonial ties with Germany (see [here](https://worldpopulationreview.com/country-rankings/beer-consumption-by-country). Also, one can observe that the top wine consuming countries are almost exclusively European, which might be due to the reason that wine production is also among the highest in these countries and thus culturally rooted.*
+*In general, there tends to be no overlap among countries with regards to the top spots in alcohol consumption, i.e. the top beer consuming countries are not the top wine consuming countries. It is surprising that Germany is only ranked \#4 in the top beer consuming countries, after Namibia, Czech Republic and Gabon. A quick research on the reason for Namibia's high beer consumption hint at its former colonial ties with Germany (see [here](https://worldpopulationreview.com/country-rankings/beer-consumption-by-country). Also, one can observe that the top wine consuming countries are almost exclusively European, which might be due to the reason that wine is culturally rooted in these countries and many of them are also known for their production of wine.*
 
 ------------------------------------------------------------------------
 
@@ -137,45 +138,51 @@ Besides the obvious variables of `title`, `genre`, `director`, `year`, and `dura
 -   `reviews`: the number of reviews for that movie
 -   `rating`: IMDB average rating
 
-## Use your data import, inspection, and cleaning skills to answer the following:
-
 -   Are there any missing values (NAs)? Are all entries distinct or are there duplicate entries?
 
 ```{r missing_values, warning = FALSE}
 skim(movies)
 ```
 
-There are no missing values, however, there are duplicate values for some variables. What is especially interesting, is that there are duplicate Titles for movies. This can be observed through looking at n_unique: Even though there are a total of 2961 records, there only seem to be 2907 unique movie titles.
+*There are no missing values as can be observed when analysing `n_missing`, however, there are duplicate values for some variables. What is especially interesting, is that there are duplicate Titles for movies. This can be observed through looking at `n_unique`: Even though there are a total of 2961 records, there only seem to be 2907 unique movie titles.*
+
+***
 
 -   Produce a table with the count of movies by genre, ranked in descending order
 
 ```{r count2, warning = FALSE}
-count3<-movies%>%
+count_moviesByGenre<-movies%>%
   group_by(genre)%>%
   count(sort=TRUE)%>%
-  rename(count=n)
+  rename("number_of_movies" = n)
 
-count3
+count_moviesByGenre
 ```
 
--   Produce a table with the average gross earning and budget (`gross` and `budget`) by genre. Calculate a variable `return_on_budget` which shows how many \$ did a movie make at the box office for each \$ of its budget. Ranked genres by this `return_on_budget` in descending order
+*There seems to be quite a large difference in the number of records across genres in this dataset, as there is information on 848 Comedy movies opposed to only 1 on Thrillers.*
+
+***
+
+-   Produce a table with the average gross earning and budget (`gross` and `budget`) by genre. Calculate a variable `return_on_budget` which shows how many \$ did a movie make at the box office for each \$ of its budget. Rank genres by this `return_on_budget` in descending order.
 
 ```{r avg_gross_earning, warning = FALSE}
 avgGenre <- movies%>%
   group_by(genre)%>%
   summarise(mean(gross), mean(budget))%>%
-  rename(
-    "Average_Gross" = "mean(gross)",
-    "Average_Budget" = "mean(budget)"
-    )%>%
+  
+  rename("Average_Gross" = "mean(gross)", "Average_Budget" = "mean(budget)")%>%
+  
   mutate(return_on_budget = Average_Gross/Average_Budget)%>%
+  
+  mutate(Average_Gross = dollar(Average_Gross), Average_Budget = dollar(Average_Budget))%>% # The dollar function is from the scales package and allows us to make the numbers more easily readable.
+  mutate(return_on_budget = round(return_on_budget, 3))%>% #We round the return column to the 3rd nearest decimal.
+  
   arrange(desc(return_on_budget))
-#format(avgGenre$Average_Gross, big.mark=".", scientific=FALSE)
-options(scipen = 50)
-
 
 avgGenre
 ```
+
+***
 
 -   Produce a table that shows the top 15 directors who have created the highest gross revenue in the box office. Don't just show the total gross amount, but also the mean, median, and standard deviation per director.
 
@@ -183,10 +190,14 @@ avgGenre
 topDirectors <- movies%>%
   group_by(director)%>%
   summarise(total_gross = sum(gross), avg_gross = mean(gross), median_gross = median(gross), sd_gross = sd(gross))%>%
-  slice_max(order_by = total_gross, n = 15)
+  slice_max(order_by = total_gross, n = 15)%>%
+  
+  mutate(total_gross = dollar(total_gross), avg_gross = dollar(avg_gross), median_gross = dollar(median_gross), sd_gross = dollar(sd_gross))
 
 topDirectors
 ```
+
+***
 
 -   Finally, ratings. Produce a table that describes how ratings are distributed by genre. We don't want just the mean, but also, min, max, median, SD and some kind of a histogram or density graph that visually shows how ratings are distributed.
 
@@ -199,19 +210,21 @@ ratings
 
 overall<-ggplot(movies, aes(x=rating))+
   geom_histogram(color="black", fill="white")+
-  geom_vline(aes(xintercept=mean(rating), color = "red"))+
-  labs(title = "overall rating distribution")
+  geom_vline(aes(xintercept=mean(rating), color = "Average Rating"), linetype = "dashed")+
+  labs(title = "Rating distribution", subtitle = "A histogram on overall rating across genres", x = "Rating")+
+  scale_color_manual(name = "Legend", values = c("Average Rating" = "orange"))+ #We adjust the legend to display the proper label for the mean line
   theme_bw()
 overall
 
 rating_by_genre<-ggplot(movies, aes(x=rating))+
   geom_histogram(color="black", fill="white")+
-  facet_wrap(vars(genre))
+  facet_wrap(vars(genre), scales = "free_y")+ #we decided that it would be more visually informative, if the y axis adapts from histogram to histogram.
+  labs(title = "Rating distribution", subtitle = "Histograms per genre")+
   theme_bw()
 rating_by_genre
 ```
 
-## Use `ggplot` to answer the following
+***
 
 -   Examine the relationship between `gross` and `cast_facebook_likes`. Produce a scatterplot and write one sentence discussing whether the number of facebook likes that the cast has received is likely to be a good predictor of how much money a movie will make at the box office. What variable are you going to map to the Y- and X- axes?
 
@@ -219,27 +232,32 @@ rating_by_genre
 all_scatter_likes <- ggplot(movies, aes(x=cast_facebook_likes, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
+  
+  scale_x_continuous(labels = number)+ #we use the scales package to enhance the axes' readability 
+  scale_y_continuous(labels = dollar)+
+  
+  labs(title = "Likes and gross revenue", subtitle = "An undadjusted look at the relationship between casts' facebook popularity and the movie's gross revenue", x = "Casts' likes on facebook", y = "Gross Revenue")+
   theme_bw()
+
 all_scatter_likes
 
 
-#we left out the visualization of outlying values in order to make it easier to read
+#In the following, we left out the visualization of outlying values in order to make the graph easier to read.
 adjusted_scatter_likes <- ggplot(movies,aes(x=cast_facebook_likes, y=gross))+
-   # add = "reg.line"  # Add regressin line
-   # add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
-   # conf.int = TRUE # Add confidence interval
-   # 
-  
+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
-  xlim(0,150000)+
-  ylim(0,500000000)+
 
+  xlim(0, 150000)+ #we limit the display of values on the x and y axes. This does not exclude the values from the regression line calculation, but only enhances readability.
+  ylim(0,500000000)+
+  
+  labs(title = "Likes and gross revenue", subtitle = "An adjusted look at the relationship between casts' facebook popularity and the movie's gross revenue", x = "Casts' likes on facebook", y = "Gross Revenue")+
   theme_bw()
+
 adjusted_scatter_likes
 ```
 
-From the trendline and correlation coefficient of 0.28 one can observe that there is a weak positive correlation between the two variables indicating that the casts' Facebook popularity may help predict the gross revenue of a movie to a slight extent.
+*From the trendline and correlation coefficient of 0.28 one can observe that there is a weak positive correlation between the two variables indicating that the casts' Facebook popularity may help predict the gross revenue of a movie to a slight extent.*
 
 -   Examine the relationship between `gross` and `budget`. Produce a scatterplot and write one sentence discussing whether budget is likely to be a good predictor of how much money a movie will make at the box office.
 
