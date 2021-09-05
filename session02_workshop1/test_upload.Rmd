@@ -499,7 +499,7 @@ age_dist_by_att <- ggplot(hr_cleaned, aes(x = age))+
   geom_density(fill = "lightblue") +
   
   facet_grid(vars(attrition))+
-  
+  #ff
   labs(title = "Age and Attrition", subtitle = "A look at the density ages dependant on attrition status", x = "Age", y = "Percentage")+
   
   ggthemes::theme_stata()+
