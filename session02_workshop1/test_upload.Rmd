@@ -46,8 +46,6 @@ library(rvest) # to scrape wikipedia page
 
 # Where Do People Drink The Most Beer, Wine And Spirits?
 
-Back in 2014, [fivethiryeight.com](https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/) published an article on alchohol consumption in different countries. The data `drinks` is available as part of the `fivethirtyeight` package. Make sure you have installed the `fivethirtyeight` package before proceeding.
-
 ```{r load_alcohol_data, warning = FALSE}
 library(fivethirtyeight)
 data(drinks)
@@ -59,7 +57,6 @@ alcohol_direct <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/da
 ```
 
 -   What are the variable types? Any missing values we should worry about?
-
 ```{r glimpse_skim_data, warning = FALSE}
 skim(alcohol_direct)
 ```
@@ -68,8 +65,7 @@ skim(alcohol_direct)
 
 ------------------------------------------------------------------------
 
-Make a plot that shows the top 25 beer consuming countries
-
+- Make a plot that shows the top 25 beer consuming countries
 ```{r beer_plot, warning = FALSE}
 # YOUR CODE GOES HERE
 beer_consumtion <- alcohol_direct %>%
@@ -82,8 +78,7 @@ ggplot(beer_consumtion, aes(y=fct_reorder(country,beer_servings), x=beer_serving
 
 ```
 
-Make a plot that shows the top 25 wine consuming countries
-
+- Make a plot that shows the top 25 wine consuming countries
 ```{r wine_plot, warning = FALSE}
 
 wine_consumption <- alcohol_direct %>%
@@ -97,8 +92,7 @@ ggplot(wine_consumption, aes(y=fct_reorder(country,wine_servings), x=wine_servin
 
 ```
 
-Finally, make a plot that shows the top 25 spirit consuming countries
-
+- Finally, make a plot that shows the top 25 spirit consuming countries
 ```{r spirit_plot, warning = FALSE}
 # YOUR CODE GOES HERE
 spirit_consumtion <- alcohol_direct %>%
@@ -120,8 +114,6 @@ ggplot(spirit_consumtion, aes(y=fct_reorder(country,spirit_servings), x=spirit_s
 
 # Analysis of movies- IMDB dataset
 
-We will look at a subset sample of movies, taken from the [Kaggle IMDB 5000 movie dataset](https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset)
-
 ```{r load_movies, warning = FALSE}
 
 movies <- read_csv(here::here("data", "movies.csv"))
@@ -129,17 +121,7 @@ glimpse(movies)
 
 ```
 
-Besides the obvious variables of `title`, `genre`, `director`, `year`, and `duration`, the rest of the variables are as follows:
-
--   `gross` : The gross earnings in the US box office, not adjusted for inflation
--   `budget`: The movie's budget
--   `cast_facebook_likes`: the number of facebook likes cast memebrs received
--   `votes`: the number of people who voted for (or rated) the movie in IMDB
--   `reviews`: the number of reviews for that movie
--   `rating`: IMDB average rating
-
 -   Are there any missing values (NAs)? Are all entries distinct or are there duplicate entries?
-
 ```{r missing_values, warning = FALSE}
 skim(movies)
 ```
@@ -149,7 +131,6 @@ skim(movies)
 ***
 
 -   Produce a table with the count of movies by genre, ranked in descending order
-
 ```{r count2, warning = FALSE}
 count_moviesByGenre<-movies%>%
   group_by(genre)%>%
@@ -164,7 +145,6 @@ count_moviesByGenre
 ***
 
 -   Produce a table with the average gross earning and budget (`gross` and `budget`) by genre. Calculate a variable `return_on_budget` which shows how many \$ did a movie make at the box office for each \$ of its budget. Rank genres by this `return_on_budget` in descending order.
-
 ```{r avg_gross_earning, warning = FALSE}
 avgGenre <- movies%>%
   group_by(genre)%>%
@@ -185,7 +165,6 @@ avgGenre
 ***
 
 -   Produce a table that shows the top 15 directors who have created the highest gross revenue in the box office. Don't just show the total gross amount, but also the mean, median, and standard deviation per director.
-
 ```{r topDirectors, warning = FALSE}
 topDirectors <- movies%>%
   group_by(director)%>%
@@ -200,8 +179,7 @@ topDirectors
 ***
 
 -   Finally, ratings. Produce a table that describes how ratings are distributed by genre. We don't want just the mean, but also, min, max, median, SD and some kind of a histogram or density graph that visually shows how ratings are distributed.
-
-```{r hist_ratings, warning = FALSE}
+```{r hist_ratings, warning = FALSE, fig.width = 10}
 ratings <- movies%>%
   group_by(genre)%>%
   summarise(avg_rating = mean(rating), min_rating = min(rating), max_rating = max(rating), median_rating = median(rating), sd_rating = sd(rating))%>%
@@ -227,8 +205,7 @@ rating_by_genre
 ***
 
 -   Examine the relationship between `gross` and `cast_facebook_likes`. Produce a scatterplot and write one sentence discussing whether the number of facebook likes that the cast has received is likely to be a good predictor of how much money a movie will make at the box office. What variable are you going to map to the Y- and X- axes?
-
-```{r gross_on_fblikes, warning = FALSE}
+```{r gross_on_fblikes, warning = FALSE, fig.width = 10}
 all_scatter_likes <- ggplot(movies, aes(x=cast_facebook_likes, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
@@ -262,8 +239,7 @@ adjusted_scatter_likes
 ***
 
 -   Examine the relationship between `gross` and `budget`. Produce a scatterplot and write one sentence discussing whether budget is likely to be a good predictor of how much money a movie will make at the box office.
-
-```{r gross_on_budget, warning = FALSE}
+```{r gross_on_budget, warning = FALSE, fig.width = 10}
 all_scatter_budget <- ggplot(movies, aes(x=budget, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
@@ -283,8 +259,7 @@ all_scatter_budget
 ***
 
 -   Examine the relationship between `gross` and `rating`. Produce a scatterplot, faceted by `genre` and discuss whether IMDB ratings are likely to be a good predictor of how much money a movie will make at the box office. Is there anything strange in this dataset?
-
-```{r gross_on_rating, warning = FALSE}
+```{r gross_on_rating, warning = FALSE, fig.width = 10}
 all_scatter_rating <- ggplot(movies, aes(x=rating, y=gross))+
   geom_point(aes(color=genre), size=0.5)+
   ylim(0,750000000)+
@@ -307,14 +282,12 @@ all_scatter_rating
 
 # Returns of financial stocks
 
-
 ```{r load_nyse_data, message=FALSE, warning=FALSE, warning = FALSE}
 nyse <- read_csv(here::here("data","nyse.csv"))
 ```
 
 - Based on this dataset, create a table and a bar plot that shows the number of companies per sector, in descending order
-
-```{r companies_per_sector, warning = FALSE}
+```{r companies_per_sector, warning = FALSE, fig.width = 10}
 
 # YOUR CODE GOES HERE
 sector_df<-nyse%>%
@@ -323,7 +296,7 @@ sector_df<-nyse%>%
   arrange(desc(number))
 sector_df
   
-barplot_sector<- ggplot(sector, aes(y=fct_reorder(sector, number), x=number))+
+barplot_sector<- ggplot(sector_df, aes(y=fct_reorder(sector, number), x=number))+
   geom_col(fill = "darkblue", width = 0.5)+
   geom_text(aes(label = number), hjust = 3, color = "white")+ #we display the # of companies and use hjust to move the labels to the left.
   labs(title = "Sector differences", subtitle = "The number of companies per sector", y = "Sector", x= "Number of companies")+
@@ -336,7 +309,6 @@ barplot_sector
 ***
 
 - Next, let's choose some stocks and their ticker symbols and download some data. You **MUST** choose 6 different stocks from the ones listed below; You should, however, add `SPY` which is the SP500 ETF (Exchange Traded Fund).
-
 ```{r get_price_data, message=FALSE, warning=FALSE, cache=TRUE}
 # Notice the cache=TRUE argument in the chunk options. Because getting data is time consuming, 
 # cache=TRUE means that once it downloads data, the chunk will not run again next time you knit your Rmd
@@ -383,7 +355,6 @@ myStocks_returns_annual <- myStocks %>%
 ```
 
 - Create a table where you summarise monthly returns for each of the stocks and `SPY`; min, max, median, mean, SD.
-
 ```{r summarise_monthly_returns, warning = FALSE}
 
 # YOUR CODE GOES HERE
@@ -396,8 +367,7 @@ summary_monthly
 ***
 
 - Plot a density plot, using `geom_density()`, for each of the stocks
-
-```{r density_monthly_returns, warning = FALSE}
+```{r density_monthly_returns, warning = FALSE, fig.width = 10}
 
 # YOUR CODE GOES HERE
 density<-ggplot(myStocks_returns_monthly, aes(x=monthly_returns))+
@@ -418,8 +388,7 @@ density
 ***
 
 - Finally, make a plot that shows the expected monthly return (mean) of a stock on the Y axis and the risk (standard deviation) in the X-axis. Please use `ggrepel::geom_text_repel()` to label each stock
-
-```{r risk_return_plot, warning = FALSE}
+```{r risk_return_plot, warning = FALSE, fig.width = 10}
 # YOUR CODE GOES HERE
 scatter_return_volatility <- ggplot(summary_monthly, aes(x=sd_return, y=avg_return, label=symbol))+
   geom_point()+
@@ -441,7 +410,6 @@ scatter_return_volatility
 ***
 
 # On your own: IBM HR Analytics
-
 
 ```{r load hrData, warning = FALSE}
 
@@ -507,7 +475,6 @@ skim(hr_cleaned)
 *Given the wide range of information, one can try to make inferences about dependencies among variables. For example, it might be interesting to find out if a combination of variables might be a good predictor for an employee's decision to leave the company (`attrition` = Yes).*
 
 - How often do people leave the company (`attrition`)
-
 ```{r attrition, warning = FALSE}
 number_attrition<-hr_cleaned%>%
   group_by(attrition)%>%
@@ -520,8 +487,7 @@ number_attrition
 *Looking at the sheer counts of YES and NO entries for the `attrition` coloumn, around 237 of all employees have left the company, while 1233 have been staying employed. This corresponds to around 16% of all recorded employees.*
 
 - How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics?
-
-```{r age_years_income_promotion, warning = FALSE}
+```{r age_years_income_promotion, warning = FALSE, fig.width = 10}
 n<-length(hr_cleaned$age) 
 
 pic_data<-data.frame(cbind(c(hr_cleaned$age,hr_cleaned$monthly_income, 
@@ -540,7 +506,6 @@ distribution
 ```
 
 - How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
-
 ```{r satis_wlb, warning = FALSE}
 hr_satis <- hr_cleaned %>% 
   group_by(job_satisfaction) %>% 
@@ -558,8 +523,7 @@ work_life_satis
 ```
 
 - Is there any relationship between `monthly_income` and `education`? `monthly_income` and `gender`?
-
-```{r income_education, warning = FALSE}
+```{r income_education, warning = FALSE, fig.width = 10}
 plot1 <- ggplot(hr_cleaned, aes(x = fct_reorder(education, -monthly_income), y=monthly_income))+ #we include a negative "-" sign infront of monthly_income in the fct_reorder function, in order to sort the x axis based on decreasing y values
   geom_boxplot()+
   
@@ -583,8 +547,7 @@ plot2
 ```
 
 - Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
-
-```{r income_vs_job, warning = FALSE}
+```{r income_vs_job, warning = FALSE, fig.width = 10}
 income_vs_job <- ggplot(hr_cleaned, aes(x=fct_reorder(job_role, -monthly_income), y=monthly_income)) + 
   geom_boxplot()+
   
@@ -601,8 +564,7 @@ income_vs_job
 ```
 
 - Calculate and plot a bar chart of the mean (or median?) income by education level.
-
-```{r bar_income_edu, warning = FALSE}
+```{r bar_income_edu, warning = FALSE, fig.width = 10}
 
 #We opted for plotting the MEDIAN monthly income, as it is typically less prone to outliers
 
@@ -624,8 +586,7 @@ median_income
 ```
 
 - Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
-
-```{r dist_income_education, warning = FALSE}
+```{r dist_income_education, warning = FALSE, fig.width = 10}
 plot7 <- hr_cleaned %>%  
   group_by(education) %>%  
   ggplot(aes(x=monthly_income))+ 
@@ -642,8 +603,7 @@ plot7
 ```
 
 - Plot income vs age, faceted by `job_role`
-
-```{r income_age_job, warning = FALSE}
+```{r income_age_job, warning = FALSE, fig.width = 10, fig.height = 10}
 plot8 <- ggplot(hr_cleaned, aes(x=age, y=monthly_income))+ 
   geom_point(size=0.1)+ 
   geom_smooth(method = "lm")+
@@ -663,7 +623,7 @@ plot8
 
 # Challenge 1: Replicating a chart
 
-We would like to replicate the following chart.
+*We would like to replicate the following chart.*
 
 ```{r challenge1, echo=FALSE, out.width="90%", warning = FALSE}
 knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_county_070321_1.jpg"), error = FALSE)
@@ -742,7 +702,7 @@ head(joined_frame) #we can have a look at the dataset. It looks like we have all
 
 *Now that we have created the dataframe with all necessary data, let's get to the attractive part of this exercise: making a beautiful plot.*
 
-```{r visualize_election_vacc_pop, warning = FALSE}
+```{r visualize_election_vacc_pop, warning = FALSE, fig.width = 10}
 plot_counties <- ggplot(joined_frame, aes(x=perc_votes_total, vacc_perc))+
   geom_rect(aes(xmin = 0, xmax = 0.45, ymin = 0, ymax = 100), fill = "#A6A8FB")+ #we add three boxes to the plot that have HEX values for the blue, purple and red colours respectively.
   geom_rect(aes(xmin = 0.45, xmax = 0.55, ymin = 0, ymax = 100), fill = "#D2A6D2")+
@@ -768,7 +728,7 @@ filter(joined_frame[ ,c("fips", "pop", "vacc_perc")], fips==48029)
 
 *It might be appropriate, to exclude  records with vacc_perc = 0 from out dataset, as it seems very hard to believe that in a county like Bexar home to 2003554 people, not a single one is fully vaccinated. An error like this potentially has a large impact on the regression line. We therefore create an adjusted DF.*
 
-```{r adjusted_visualize_election_vacc_pop, warning = FALSE}
+```{r adjusted_visualize_election_vacc_pop, warning = FALSE, fig.width = 10}
 
 #we first exclude records with vacc_perc equal to 0
 adj_joined_fram <- joined_frame%>%
@@ -827,9 +787,9 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
          )
 ```
 
-*Now that we have fetched all the data from the wikipedia table into our `german_election_polls` data frame, let's try to visualize our data.
+*Now that we have fetched all the data from the wikipedia table into our `german_election_polls` data frame, let's try to visualize our data.*
 
-```{r visualize_german_election_polls, warning = FALSE, echo=FALSE,results='hide',fig.keep='all'}
+```{r visualize_german_election_polls, warning = FALSE, fig.width = 10}
 
 plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+ #because we have multiple lines (representing multiple parties), we only map the x axis uptop here. We map y-values when we create every scatter and line plot separately for each party.
   
