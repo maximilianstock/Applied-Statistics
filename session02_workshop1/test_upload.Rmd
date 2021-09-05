@@ -442,9 +442,6 @@ scatter_return_volatility
 
 # On your own: IBM HR Analytics
 
-For this task, you will analyse a data set on Human Resoruce Analytics. The [IBM HR Analytics Employee Attrition & Performance data set](https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset) is a fictional data set created by IBM data scientists. Among other things, the data set includes employees' income, their distance from work, their position in the company, their level of education, etc. A full description can be found on the website.
-
-First let us load the data
 
 ```{r load hrData, warning = FALSE}
 
@@ -453,9 +450,7 @@ glimpse(hr_dataset)
 
 ```
 
-I am going to clean the data set, as variable names are in capital letters, some variables are not really necessary, and some variables, e.g., `education` are given as a number rather than a more useful description
-
-```{r cleanHRData, warning = FALSE}
+```{r cleanHRData, warning = FALSE, message = FALSE, echo = FALSE}
 
 hr_cleaned <- hr_dataset %>% 
   clean_names() %>% 
@@ -503,47 +498,57 @@ hr_cleaned <- hr_dataset %>%
 
 ```
 
-Produce a one-page summary describing this dataset. Here is a non-exhaustive list of questions:
+```{r headerHRData}
+head(hr_cleaned)
+skim(hr_cleaned)
+```
+*The `hr_cleaned` dataset holds fictional information of a total of 1470 employees on variables such as the employees' education, job specifics, performance and attrition. All in all, there are 9 numeric and 10 non-numeric variables*
 
-1.  How often do people leave the company (`attrition`)
+*Given the wide range of information, one can try to make inferences about dependencies among variables. For example, it might be interesting to find out if a combination of variables might be a good predictor for an employee's decision to leave the company (`attrition` = Yes).*
+
+- How often do people leave the company (`attrition`)
 
 ```{r attrition, warning = FALSE}
-numberz<-hr_cleaned%>%
+number_attrition<-hr_cleaned%>%
   group_by(attrition)%>%
-  summarize(part = count(attrition))%>%
-  mutate(perc = part/sum(part))
-  NULL
-numberz
+  summarize(number_count = count(attrition))%>%
+  mutate(perc = number_count/sum(number_count)) #we introduce a second column, namely percent, to represent the count as a percentage of the total
+
+number_attrition
 ```
 
-Looking at the sheer counts of YES and NO entries for the attrition coloumn, around 237 of all employees have left the company, while 1233 have been staying employed. This corresponds to around 16% of all recorded employees.
+*Looking at the sheer counts of YES and NO entries for the `attrition` coloumn, around 237 of all employees have left the company, while 1233 have been staying employed. This corresponds to around 16% of all recorded employees.*
 
-2.  How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics?
+- How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics?
 
 ```{r age_years_income_promotion, warning = FALSE}
 n<-length(hr_cleaned$age) 
+
 pic_data<-data.frame(cbind(c(hr_cleaned$age,hr_cleaned$monthly_income, 
                   hr_cleaned$years_since_last_promotion), 
                 c(rep("age",n),rep("monthly_income",n),rep("years_since_last_promotion",n)))) 
 colnames(pic_data)<-c("Num","Attribute") 
 pic_data$Num<-as.integer(pic_data$Num) 
-colnames(pic_data)<-c("Num","Attribute") 
-distribution<-ggplot(pic_data,aes(x=Num))+ 
+
+distribution<-ggplot(pic_data, aes(x=Num))+ 
   geom_histogram()+ 
-  facet_wrap(vars(Attribute),scale="free")+ 
-  labs(x="",y="Frequency")+ 
+  facet_wrap(vars(Attribute), scale="free")+ 
+  labs(title = "Distribution across the dataset", subtitle = "Counts of values for age, monthly income and years since last promotion", x="",y="Frequency")+ 
+  
   theme_bw() 
 distribution 
 ```
 
-3.  How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
+- How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
 
 ```{r satis_wlb, warning = FALSE}
 hr_satis <- hr_cleaned %>% 
   group_by(job_satisfaction) %>% 
   count(sort=TRUE) %>% 
-  mutate(percent=n/1470) 
+  mutate(percent=n/1470)
+
 hr_satis 
+
 work_life_satis <- hr_cleaned %>% 
   group_by(work_life_balance) %>% 
   count(sort=TRUE) %>% 
@@ -552,26 +557,42 @@ work_life_satis <- hr_cleaned %>%
 work_life_satis 
 ```
 
-4.  Is there any relationship between monthly income and education? Monthly income and gender?
+- Is there any relationship between `monthly_income` and `education`? `monthly_income` and `gender`?
 
 ```{r income_education, warning = FALSE}
-plot1 <- ggplot(hr_cleaned, aes(y=monthly_income, x = education))+ 
-  geom_boxplot() 
+plot1 <- ggplot(hr_cleaned, aes(x = fct_reorder(education, -monthly_income), y=monthly_income))+ #we include a negative "-" sign infront of monthly_income in the fct_reorder function, in order to sort the x axis based on decreasing y values
+  geom_boxplot()+
+  
+  scale_y_continuous(labels = dollar)+
+  
+  labs(title = "Education vs income", subtitle = "A look at an employee's academic background and monthly income", x = "Education", y = "Monthly income")+
+  
+  theme_bw()
 plot1 
   
-plot2 <-ggplot(hr_cleaned, aes(y=monthly_income, x = gender))+ 
-  geom_boxplot() 
+plot2 <-ggplot(hr_cleaned, aes(x = fct_reorder(gender, -monthly_income), y=monthly_income))+ 
+  geom_boxplot()+
+  
+  scale_y_continuous(label = dollar)+
+  
+  labs(title = "Gender vs income", subtitle = "A look at an employee's sex and monthly income", x = "Gender", y = "Monthly income")+
+  
+  theme_bw()
 plot2 
  
 ```
 
-5.  Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
+- Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
 
 ```{r income_vs_job, warning = FALSE}
-income_vs_job <- ggplot(hr_cleaned, aes(x=reorder(job_role, -monthly_income, na.rm = TRUE), y=monthly_income)) + 
+income_vs_job <- ggplot(hr_cleaned, aes(x=fct_reorder(job_role, -monthly_income), y=monthly_income)) + 
   geom_boxplot()+
-  labs(y="Monthly Income", x = "Job", title = "Income Distribution By Job")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  
+  scale_y_continuous(labels = dollar)+
+  
+  labs(title = "Income distribution by job", subtitle = "A look at the relationship between job titles and monthly income", x = "Job" , y="Monthly income")+
+  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) #we adjust the labels on the x axis such that they are vertically aligned
 
   
 
@@ -579,31 +600,54 @@ income_vs_job
 
 ```
 
-6.  Calculate and plot a bar chart of the mean (or median?) income by education level.
+- Calculate and plot a bar chart of the mean (or median?) income by education level.
 
 ```{r bar_income_edu, warning = FALSE}
 
-ggplo <- ggplot(hr_cleaned, aes(x=edu))
+#We opted for plotting the MEDIAN monthly income, as it is typically less prone to outliers
+
+median_income <- hr_cleaned%>%
+  group_by(education)%>%
+  summarise(median_monthly_income = median(monthly_income))%>%
+  
+  ggplot(aes(x = fct_reorder(education, -median_monthly_income), y = median_monthly_income))+
+    geom_col(fill = "lightblue")+
+  
+    scale_y_continuous(labels = dollar)+
+  
+    labs(title = "Median income by education", subtitle = "A look at the relationship between academic background and median monthly income", x = "Education" , y="Median monthly income")+
+  
+    theme_bw()
+
+median_income
 
 ```
 
-7.  Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
+- Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
 
 ```{r dist_income_education, warning = FALSE}
 plot7 <- hr_cleaned %>%  
   group_by(education) %>%  
   ggplot(aes(x=monthly_income))+ 
-  geom_histogram()+ 
-  ggthemes::theme_wsj() 
+    geom_histogram(fill = "lightblue")+
+    facet_wrap(vars(education), scales = "free_y")+
+  
+    scale_x_continuous(labels = dollar)+
+  
+    labs(title = "Income distribution by education", subtitle = "A look at the relationship between edcuation level and monthly income", x = "Monthly income" , y="Count")+
+  
+    ggthemes::theme_stata()+
+    theme(plot.background = element_blank()) #we remove the blue background to make the desing more coherent
 plot7 
 ```
 
-8.  Plot income vs age, faceted by `job_role`
+- Plot income vs age, faceted by `job_role`
 
 ```{r income_age_job, warning = FALSE}
 plot8 <- ggplot(hr_cleaned, aes(x=age, y=monthly_income))+ 
   geom_point(size=0.1)+ 
-  geom_smooth(method = "lm")+ 
+  geom_smooth(method = "lm")+
+  
   facet_wrap(vars(job_role), scales = "free" ) 
 plot8 
 ```
