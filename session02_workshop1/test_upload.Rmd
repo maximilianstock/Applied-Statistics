@@ -43,6 +43,11 @@ library(tidyquant)
 library(ggrepel)
 library(rvest) # to scrape wikipedia page
 ```
+***
+
+Our added answers/comments are always in italic!
+
+***
 
 # Where Do People Drink The Most Beer, Wine And Spirits?
 
@@ -484,7 +489,27 @@ number_attrition<-hr_cleaned%>%
 number_attrition
 ```
 
-*Looking at the sheer counts of YES and NO entries for the `attrition` coloumn, around 237 of all employees have left the company, while 1233 have been staying employed. This corresponds to around 16% of all recorded employees.*
+*Looking at the sheer counts of YES and NO entries for the `attrition` coloumn, around 237 of all employees have left the company. This corresponds to a percentage of around 16% of all recorded employees. At the same time, 1233 employees have been staying with the company.*
+
+*In addition, it might be interesting to plot the distribution of age faceted by the attrition value to see whether one can make any inferences from that relationship.*
+
+```{r facet_age_dist_by_attrition, warning = FALSE, echo = FALSE, fig.width = 10, fig.height = 9}
+
+age_dist_by_att <- ggplot(hr_cleaned, aes(x = age))+
+  geom_density(fill = "lightblue") +
+  
+  facet_grid(vars(attrition))+
+  
+  labs(title = "Age and Attrition", subtitle = "A look at the density ages dependant on attrition status", x = "Age", y = "Percentage")+
+  
+  ggthemes::theme_stata()+
+  theme(plot.background = element_blank()) # it just looks nice with a white background!
+
+age_dist_by_att
+
+```
+
+*Looking at the two density plots, it is observable, that values in the age variable tend to be lower for `Attrition` = Yes. One might speculate, that younger employees tend to leave the company more often than older employees, because, on average, it is easier for them to find and adapt to a new job. Furthermore, as the analysis further below shows, compared to their older colleagues, they tend to have a lower salary, giving them less reason to stay with the company.*
 
 - How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics?
 ```{r age_years_income_promotion, warning = FALSE, fig.width = 10}
@@ -603,7 +628,7 @@ plot7
 ```
 
 - Plot income vs age, faceted by `job_role`
-```{r income_age_job, warning = FALSE, fig.width = 10, fig.height = 10}
+```{r income_age_job, warning = FALSE, fig.width = 10, fig.height = 12}
 plot8 <- ggplot(hr_cleaned, aes(x=age, y=monthly_income))+ 
   geom_point(size=0.1)+ 
   geom_smooth(method = "lm")+
@@ -702,7 +727,7 @@ head(joined_frame) #we can have a look at the dataset. It looks like we have all
 
 *Now that we have created the dataframe with all necessary data, let's get to the attractive part of this exercise: making a beautiful plot.*
 
-```{r visualize_election_vacc_pop, warning = FALSE, fig.width = 10}
+```{r visualize_election_vacc_pop, warning = FALSE, fig.width = 10, fig.height = 9}
 plot_counties <- ggplot(joined_frame, aes(x=perc_votes_total, vacc_perc))+
   geom_rect(aes(xmin = 0, xmax = 0.45, ymin = 0, ymax = 100), fill = "#A6A8FB")+ #we add three boxes to the plot that have HEX values for the blue, purple and red colours respectively.
   geom_rect(aes(xmin = 0.45, xmax = 0.55, ymin = 0, ymax = 100), fill = "#D2A6D2")+
@@ -720,15 +745,15 @@ plot_counties
 ```
 
 
-*It seems like there are a number of outliers in the dataset. 276 counties have reported a full vaccination count of 0 for the Sep. 3rd collection. For instance, as you can see in the following output dataframe, Bexar county, home to a population of 2003554 reported a vaccination rate of 0%.*
+*It seems like there are a number of outliers in the dataset. 276 counties have reported a full vaccination count of 0 for the Sep. 3rd collection. For instance, as you can see in the following output dataframe, Bexar county, home to a population of 2003554, reported a vaccination rate of 0%.*
 
 ```{r zero_vacc, warning = FALSE}
 filter(joined_frame[ ,c("fips", "pop", "vacc_perc")], fips==48029)
 ```
 
-*It might be appropriate, to exclude  records with vacc_perc = 0 from out dataset, as it seems very hard to believe that in a county like Bexar home to 2003554 people, not a single one is fully vaccinated. An error like this potentially has a large impact on the regression line. We therefore create an adjusted DF.*
+*It might be appropriate, to exclude  records with vacc_perc = 0 from out dataset, as it seems very hard to believe that in a county like Bexar, home to 2003554 people, not a single one is fully vaccinated. A data collection error like this potentially has a large impact on the regression line. We therefore create an adjusted DF.*
 
-```{r adjusted_visualize_election_vacc_pop, warning = FALSE, fig.width = 10}
+```{r adjusted_visualize_election_vacc_pop, warning = FALSE, fig.width = 10, fig.height = 9}
 
 #we first exclude records with vacc_perc equal to 0
 adj_joined_fram <- joined_frame%>%
@@ -828,9 +853,9 @@ plot_election_polls
 
 # Details
 
--   Who did you collaborate with: Group 3 (Jiaying Chen, Yingjin He, Sabrina Seow, Kashish Solanki, Roman Vazquez Lorenzo, Maximilian Stock)
--   Approximately how much time did you spend on this problem set: 10 hours
--   What, if anything, gave you the most trouble: Finding a way to add the legend to the election poll graph was more complicated than initally expected.
+-   Who did you collaborate with: *Group 3 (Jiaying Chen, Yingjin He, Sabrina Seow, Kashish Solanki, Roman Vazquez Lorenzo, Maximilian Stock)*
+-   Approximately how much time did you spend on this problem set: *10 hours*
+-   What, if anything, gave you the most trouble: *Finding a way to add the legend to the election poll graph was more complicated than initally expected.*
 
 # Rubric
 
