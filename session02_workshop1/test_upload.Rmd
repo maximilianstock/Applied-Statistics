@@ -647,26 +647,27 @@ plot7
 plot8 <- ggplot(hr_cleaned, aes(x=age, y=monthly_income))+ 
   geom_point(size=0.1)+ 
   geom_smooth(method = "lm")+
+  facet_wrap(vars(job_role), scales = "free")+
   
-  facet_wrap(vars(job_role), scales = "free" ) 
+  scale_y_continuous(labels = dollar)+
+  
+  labs(title = "Income by age and job title", subtitle = "A look at the relationship between age, job title and monthly income level", x = "Age" , y="Monthly income")+
+  
+  ggthemes::theme_stata()+
+  theme(plot.background = element_blank())
+
 plot8 
 ```
 
+***
+
 # Challenge 1: Replicating a chart
 
-The purpose of this exercise is to reproduce a plot using your `dplyr` and `ggplot2` skills. Read the article [The Racial Factor: There's 77 Counties Which Are Deep Blue But Also Low-Vaxx. Guess What They Have In Common?](https://acasignups.net/21/07/18/racial-factor-theres-77-counties-which-are-deep-blue-also-low-vaxx-guess-what-they-have) and have a look at the attached figure.
+We would like to replicate the following chart.
 
 ```{r challenge1, echo=FALSE, out.width="90%", warning = FALSE}
 knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_county_070321_1.jpg"), error = FALSE)
 ```
-
-You dont have to worry about the blue-red backgound and don't worry about replicating it exactly, try and see how far you can get. You're encouraged to work together if you want to and exchange tips/tricks you figured out-- and even though the figure in the original article is from early July 2021, you can use the most recent data.
-
-Some hints to get you started:
-
-1.  To get vaccination by county, we will use [data from the CDC](https://data.cdc.gov/Vaccinations/COVID-19-Vaccinations-in-the-United-States-County/8xkx-amqh)
-2.  You need to get [County Presidential Election Returns 2000-2020](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/VOQCHQ)
-3.  Finally, you also need an estimate of the [population of each county](https://www.ers.usda.gov/webdocs/DataFiles/48747/PopulationEstimates.csv?v=2232)
 
 ```{r loadCountyData, echo=FALSE, cache=TRUE, warning = FALSE}
 
@@ -700,9 +701,9 @@ population <- vroom(population_url) %>%
 
 ```
 
-```{r}
-skim(population)
-```
+*First we do some cleaning. As the vaccination data is time series, but we are only interested in the most recent status of vacc. percent per county, we can limit our dataframe to Sep. 3rd data.*
+
+*In addition, we add a column to the election dataset which calculates the number of votes for one candidate as a percentage of the total number of votes in every given county.*
 
 ```{r cleanCountryData, warning = FALSE}
 #as there are multiple dates for vacc statuses, and we are only interested in the most recent one, we can do some cleaning. Data from Sep. 3rd, 2021, seems to be most recent.
@@ -716,57 +717,79 @@ elections_perc <- election2020_results%>%
   mutate(perc_votes = candidatevotes/totalvotes)
 ```
 
+*Next up, we create a new dataframe, based on joined values from the three original ones. Here, we only include the data really necessary for the reproduction of the graph.*
+
+*Let's have a sneak peak at the output dataframe. It looks like this is all the data we really need.*
+
 ```{r join_by_fips, warning = FALSE}
-#We decide to just join coloumn series_complete_pop_pct from the vacc dataset, as this should suffice to recreate the graph. We also rename the coloumns to make their names a little more easy on the tongue.
+#We decide to just join coloumn series_complete_pop_pct from the vacc dataset, as this should suffice to recreate the graph. We use inner join here, as we have a key variable, i.e. fips, to join all three datasets by.
+
+#We also rename the coloumns to make their names a little more easy on the tongue.
 
 joined_frame <- inner_join(population, vaccinations_recent[,c("fips", "series_complete_pop_pct") ], by = "fips")%>%
   rename("vacc_perc" = "series_complete_pop_pct", "pop" = "pop_estimate_2019")
 
-#Similarly, we join parts of the cleaned election data, and filter out records other than votes for Trump, as they are not needed for the graph. In addtion, we sum up perc_votes because there is sometimes data for different ways of voting, i.e. early vote, election day, provisional.
+#Similarly, we join parts of the cleaned election data, and filter out records other than votes for Trump, as they are not needed for the graph. In addition, we sum up perc_votes because there is sometimes data for different ways of voting, i.e. early vote, election day, provisional.
 
 joined_frame <- inner_join(joined_frame, elections_perc[,c("fips", "candidate", "perc_votes")])%>%
   filter(candidate=="DONALD J TRUMP")%>%
   group_by(fips, pop, vacc_perc, candidate, )%>%
   summarise(sum(perc_votes))%>%
-  rename("perc_votes_total" = "sum(perc_votes)")
+  rename("perc_votes_total" = "sum(perc_votes)") #sum, to take into consideration all kinds of voting methods.
 
 head(joined_frame) #we can have a look at the dataset. It looks like we have all the data we need for visualization
 ```
 
+*Now that we have created the dataframe with all necessary data, let's get to the attractive part of this exercise: making a beautiful plot.*
+
 ```{r visualize_election_vacc_pop, warning = FALSE}
 plot_counties <- ggplot(joined_frame, aes(x=perc_votes_total, vacc_perc))+
-  geom_rect(aes(xmin = 0, xmax = 0.45, ymin = 0, ymax = 100), fill = "#A6A8FB")+
+  geom_rect(aes(xmin = 0, xmax = 0.45, ymin = 0, ymax = 100), fill = "#A6A8FB")+ #we add three boxes to the plot that have HEX values for the blue, purple and red colours respectively.
   geom_rect(aes(xmin = 0.45, xmax = 0.55, ymin = 0, ymax = 100), fill = "#D2A6D2")+
   geom_rect(aes(xmin = 0.55, xmax = 1, ymin = 0, ymax = 100), fill = "#FDA7A7")+
+  
   geom_point(aes(size=pop), alpha = 1/3)+
   geom_smooth(method = "lm")+
+  
+  labs(title = "COVID19 vaccination levels versus Trump voting", subtitle = "A look at the relationship between 2020 US election results and percentages of fully vaccinated people, per county as of Sep. 3rd, 2021", x = "Trump voting", y = "County's percentage of fully vaccinated people")+
+  
   theme_bw()
+
 plot_counties
 
-#It seems like there are a number of outliers in the dataset. 276 counties have reported a full vaccination count of 0 for the Sep. 3rd collection. As you can see in the output, Bexar county, home to a population of 2003554 reported a vacc rate of 0%.
+```
 
-filter(joined_frame, fips==48029)
 
-#It might be appropriate, to exclude the records with vacc_perc = 0 from out dataset, as it seems very hard to believe that among 2003554 people, not a single one is fully vaccinated. An error like this potentially has a large impact on the regression line. We therefore create an adjusted DF.
+*It seems like there are a number of outliers in the dataset. 276 counties have reported a full vaccination count of 0 for the Sep. 3rd collection. For instance, as you can see in the following output dataframe, Bexar county, home to a population of 2003554 reported a vaccination rate of 0%.*
 
+```{r zero_vacc, warning = FALSE}
+filter(joined_frame[ ,c("fips", "pop", "vacc_perc")], fips==48029)
+```
+
+*It might be appropriate, to exclude  records with vacc_perc = 0 from out dataset, as it seems very hard to believe that in a county like Bexar home to 2003554 people, not a single one is fully vaccinated. An error like this potentially has a large impact on the regression line. We therefore create an adjusted DF.*
+
+```{r adjusted_visualize_election_vacc_pop, warning = FALSE}
+
+#we first exclude records with vacc_perc equal to 0
 adj_joined_fram <- joined_frame%>%
   filter(vacc_perc!=0)
 
+#here, we simply replicate the plot, but this time with adjusted values.
 adj_plot_counties <- ggplot(adj_joined_fram, aes(x = perc_votes_total, y = vacc_perc))+
   geom_rect(aes(xmin = 0, xmax = 0.45, ymin = 0, ymax = 100), fill = "#A6A8FB")+
   geom_rect(aes(xmin = 0.45, xmax = 0.55, ymin = 0, ymax = 100), fill = "#D2A6D2")+
   geom_rect(aes(xmin = 0.55, xmax = 1, ymin = 0, ymax = 100), fill = "#FDA7A7")+
+  
   geom_point(aes(size = pop), alpha = 1/3)+
   geom_smooth(method = "lm")+
+  
+  labs(title = "ADJUSTED - COVID19 vaccination levels versus Trump voting", subtitle = "An adjusted look at the relationship between 2020 US election results and percentages of fully vaccinated people, per county as of Sep. 3rd, 2021", x = "Trump voting", y = "County's percentage of fully vaccinated people")+
+
   theme_bw()
 adj_plot_counties
 ```
 
 # Challenge 2: Opinion polls for the 2021 German elections
-
-The Guardian newspaper has an [election poll tracker for the upcoming German election](https://www.theguardian.com/world/2021/aug/20/german-election-poll-tracker-who-will-be-the-next-chancellor). The list of the opinion polls since Jan 2021 can be found at [Wikipedia](https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_German_federal_election) and your task is to reproduce the graph similar to the one produced by the Guardian.
-
-The following code will scrape the wikipedia page and import the table in a dataframe.
 
 ```{r, scrape_wikipedia_polling_data, warnings= FALSE, message=FALSE}
 url <- "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_German_federal_election"
@@ -804,47 +827,50 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
          )
 ```
 
+*Now that we have fetched all the data from the wikipedia table into our `german_election_polls` data frame, let's try to visualize our data.
+
 ```{r visualize_german_election_polls, warning = FALSE, echo=FALSE,results='hide',fig.keep='all'}
 
-plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+
+plot_election_polls <- ggplot(german_election_polls, aes(x = end_date))+ #because we have multiple lines (representing multiple parties), we only map the x axis uptop here. We map y-values when we create every scatter and line plot separately for each party.
+  
   geom_point(aes(y = union), color = "black", alpha = 0.3)+ 
-  geom_line(aes(y=rollmean(union, 14, na.pad=TRUE)), color = "black")+ #we add a line representing the rolling average of values for the past 14 days. We also adjust the padding for enhancing visualization.
+  geom_line(aes(y=rollmean(union, 14, na.pad=TRUE), color = "black"))+ #we add a line representing the rolling average of values for the past 14 days. We also adjust the padding for enhanced visualization.+
   
   geom_point(aes(y = spd), color = "red", alpha = 0.3)+
-  geom_line(aes(y=rollmean(spd, 14, na.pad=TRUE)), color = "red")+
+  geom_line(aes(y=rollmean(spd, 14, na.pad=TRUE), color = "red"))+
   
   geom_point(aes(y = grune), color = "darkgreen", alpha = 0.3)+
-  geom_line(aes(y=rollmean(grune, 14, na.pad=TRUE)), color = "darkgreen")+
+  geom_line(aes(y=rollmean(grune, 14, na.pad=TRUE), color = "darkgreen"))+
   
   geom_point(aes(y = af_d), color = "blue", alpha = 0.3)+
-  geom_line(aes(y=rollmean(af_d, 14, na.pad=TRUE)), color = "blue")+
+  geom_line(aes(y=rollmean(af_d, 14, na.pad=TRUE), color = "blue"))+
   
   geom_point(aes(y = fdp), color = "#F4E332", alpha = 0.3)+
-  geom_line(aes(y=rollmean(fdp, 14, na.pad=TRUE)), color = "#F4E332")+
+  geom_line(aes(y=rollmean(fdp, 14, na.pad=TRUE), color = "#F4E332"))+
   
   geom_point(aes(y=linke), color = "darkred", alpha = 0.3)+
-  geom_line(aes(y=rollmean(linke, 14, na.pad = TRUE)), color = "darkred")+
+  geom_line(aes(y=rollmean(linke, 14, na.pad = TRUE), color = "darkred"))+
   
-  labs(x="2021 Poll Month", y="Voting Percentage", title = "German Elections", subtitle = "Change in estimated voting during 2021")
+  
+  #we have desperately tried to add a functioning legend to our plot. We finally managed to do so with the scale color identity function, after mapping the correct colors to the variable aesthetics before. Inspiration for this code came from https://aosmith.rbind.io/2018/07/19/manual-legends-ggplot2/ 
+  scale_color_identity(breaks = c("black", "red", "darkgreen", "blue", "#F4E332", "darkred"),
+                          labels = c("CDU/CSU", "SPD", "Grüne", "AfD", "FDP", "Linke"),
+                          guide = "legend",
+                          name = "Legend")+
+  
+  labs(title = "German elections", subtitle = "Change in estimated voting during 2021", x="2021 Poll Month", y="Voting Percentage")+
+  
   theme_bw()
  
 plot_election_polls
 
 ```
 
-# Deliverables
-
-There is a lot of explanatory text, comments, etc. You do not need these, so delete them and produce a stand-alone document that you could share with someone. Knit the edited and completed R Markdown file as an HTML document (use the "Knit" button at the top of the script editor window) and upload it to Canvas.
-
 # Details
 
--   Who did you collaborate with: TYPE NAMES HERE
--   Approximately how much time did you spend on this problem set: ANSWER HERE
--   What, if anything, gave you the most trouble: ANSWER HERE
-
-**Please seek out help when you need it,** and remember the [15-minute rule](https://mam2022.netlify.app/syllabus/#the-15-minute-rule){target="_blank"}. You know enough R (and have enough examples of code from class and your readings) to be able to do this. If you get stuck, ask for help from others, post a question on Slack-- and remember that I am here to help too!
-
-> As a true test to yourself, do you understand the code you submitted and are you able to explain it to someone else?
+-   Who did you collaborate with: Group 3 (Jiaying Chen, Yingjin He, Sabrina Seow, Kashish Solanki, Roman Vazquez Lorenzo, Maximilian Stock)
+-   Approximately how much time did you spend on this problem set: 10 hours
+-   What, if anything, gave you the most trouble: Finding a way to add the legend to the election poll graph was more complicated than initally expected.
 
 # Rubric
 
