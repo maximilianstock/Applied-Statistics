@@ -201,7 +201,7 @@ topDirectors
 
 -   Finally, ratings. Produce a table that describes how ratings are distributed by genre. We don't want just the mean, but also, min, max, median, SD and some kind of a histogram or density graph that visually shows how ratings are distributed.
 
-```{r ratings, warning = FALSE}
+```{r hist_ratings, warning = FALSE}
 ratings <- movies%>%
   group_by(genre)%>%
   summarise(avg_rating = mean(rating), min_rating = min(rating), max_rating = max(rating), median_rating = median(rating), sd_rating = sd(rating))%>%
@@ -228,7 +228,7 @@ rating_by_genre
 
 -   Examine the relationship between `gross` and `cast_facebook_likes`. Produce a scatterplot and write one sentence discussing whether the number of facebook likes that the cast has received is likely to be a good predictor of how much money a movie will make at the box office. What variable are you going to map to the Y- and X- axes?
 
-```{r, gross_on_fblikes, warning = FALSE}
+```{r gross_on_fblikes, warning = FALSE}
 all_scatter_likes <- ggplot(movies, aes(x=cast_facebook_likes, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
@@ -259,67 +259,83 @@ adjusted_scatter_likes
 
 *From the trendline and correlation coefficient of 0.28 one can observe that there is a weak positive correlation between the two variables indicating that the casts' Facebook popularity may help predict the gross revenue of a movie to a slight extent.*
 
+***
+
 -   Examine the relationship between `gross` and `budget`. Produce a scatterplot and write one sentence discussing whether budget is likely to be a good predictor of how much money a movie will make at the box office.
 
-```{r, gross_on_budget, warning = FALSE}
+```{r gross_on_budget, warning = FALSE}
 all_scatter_budget <- ggplot(movies, aes(x=budget, y=gross))+
   geom_point(aes(color=genre))+
   geom_smooth(method = "lm")+
+  
+  scale_x_continuous(labels = dollar)+
+  scale_y_continuous(labels = dollar)+
+
+  labs(title = "Budget and gross revenue", subtitle = "A look at the relationship between the movie's budget and its gross revenue", x = "Budget", y = "Gross Revenue")+
+
   theme_bw()
 all_scatter_budget
 
-
 ```
 
-Compared to the casts' facebook popularity, budget seems to be a stronger predictor of a movie's gross revenue as the correlation coefficient is closer to 1.
+*Compared to the casts' facebook popularity, budget seems to be a stronger predictor of a movie's gross revenue as the correlation coefficient is closer to 1.*
+
+***
 
 -   Examine the relationship between `gross` and `rating`. Produce a scatterplot, faceted by `genre` and discuss whether IMDB ratings are likely to be a good predictor of how much money a movie will make at the box office. Is there anything strange in this dataset?
 
-```{r, gross_on_rating, warning = FALSE}
+```{r gross_on_rating, warning = FALSE}
 all_scatter_rating <- ggplot(movies, aes(x=rating, y=gross))+
   geom_point(aes(color=genre), size=0.5)+
   ylim(0,750000000)+
   geom_smooth(method = "lm")+
-  facet_wrap(vars(genre))+
+  facet_wrap(vars(genre), scales = "free_y")+ #we decide to only have a changing y axis across the charts to make identifying smaller values easier 
+  
+  scale_y_continuous(labels = dollar_format(scale = 1/10000000, prefix = "m $"))+ #we use the scales package to scale the y axis to million $
+  
+  labs(title = "Rating and gross revenue", subtitle = "A look at the relationship between a movie's rating and its gross revenue", x = "Rating", y = "Gross Revenue")+
+  
   theme_bw()
+
 all_scatter_rating
 
 ```
 
-Overall, one can observe a positive correlation between a movie's rating and its gross revenue, however, as with casts' facebook likes, the correlation is weak. Due to the small sample size of some genres (e.g. Musical, Western and Sci-Fi), not all trendlines are representative.
+*Overall, one can observe a positive correlation between a movie's rating and its gross revenue, however, as with casts' facebook likes, the correlation is weak. Due to the small sample size of some genres (e.g. Musical, Western and Sci-Fi), not all trendlines are representative.*
+
+***
 
 # Returns of financial stocks
 
-> You may find useful the material on [finance data sources](https://mam2022.netlify.app/reference/finance_data/).
-
-We will use the `tidyquant` package to download historical data of stock prices, calculate returns, and examine the distribution of returns.
-
-We must first identify which stocks we want to download data for, and for this we must know their ticker symbol; Apple is known as AAPL, Microsoft as MSFT, McDonald's as MCD, etc. The file `nyse.csv` contains 508 stocks listed on the NYSE, their ticker `symbol`, `name`, the IPO (Initial Public Offering) year, and the sector and industry the company is in.
 
 ```{r load_nyse_data, message=FALSE, warning=FALSE, warning = FALSE}
 nyse <- read_csv(here::here("data","nyse.csv"))
 ```
 
-Based on this dataset, create a table and a bar plot that shows the number of companies per sector, in descending order
+- Based on this dataset, create a table and a bar plot that shows the number of companies per sector, in descending order
 
 ```{r companies_per_sector, warning = FALSE}
 
 # YOUR CODE GOES HERE
-sector<-nyse%>%
+sector_df<-nyse%>%
   group_by(sector)%>%
   summarise(number = count(sector))%>%
   arrange(desc(number))
-sector
+sector_df
   
-barplot<- ggplot(sector, aes(y=fct_reorder(sector, number), x=number))+
-  geom_col(width = 0.5)+
-  labs(title = "companies per sector", y = "sector", x= "number of companies")+
+barplot_sector<- ggplot(sector, aes(y=fct_reorder(sector, number), x=number))+
+  geom_col(fill = "darkblue", width = 0.5)+
+  geom_text(aes(label = number), hjust = 3, color = "white")+ #we display the # of companies and use hjust to move the labels to the left.
+  labs(title = "Sector differences", subtitle = "The number of companies per sector", y = "Sector", x= "Number of companies")+
+  
   theme_bw()
 
-barplot
+barplot_sector
 ```
 
-Next, let's choose some stocks and their ticker symbols and download some data. You **MUST** choose 6 different stocks from the ones listed below; You should, however, add `SPY` which is the SP500 ETF (Exchange Traded Fund).
+***
+
+- Next, let's choose some stocks and their ticker symbols and download some data. You **MUST** choose 6 different stocks from the ones listed below; You should, however, add `SPY` which is the SP500 ETF (Exchange Traded Fund).
 
 ```{r get_price_data, message=FALSE, warning=FALSE, cache=TRUE}
 # Notice the cache=TRUE argument in the chunk options. Because getting data is time consuming, 
@@ -334,7 +350,7 @@ myStocks <- c("GREK","GME","AMC","AAPL","COW","TSLA","SPY" ) %>%
 glimpse(myStocks) # examine the structure of the resulting data frame
 ```
 
-Financial performance analysis depend on returns; If I buy a stock today for 100 and I sell it tomorrow for 101.75, my one-day return, assuming no transaction costs, is 1.75%. So given the adjusted closing prices, our first step is to calculate daily and monthly returns.
+***
 
 ```{r calculate_returns, message=FALSE, warning=FALSE, cache=TRUE}
 #calculate daily returns
@@ -366,7 +382,7 @@ myStocks_returns_annual <- myStocks %>%
                cols = c(nested.col))
 ```
 
-Create a table where you summarise monthly returns for each of the stocks and `SPY`; min, max, median, mean, SD.
+- Create a table where you summarise monthly returns for each of the stocks and `SPY`; min, max, median, mean, SD.
 
 ```{r summarise_monthly_returns, warning = FALSE}
 
@@ -377,41 +393,52 @@ summary_monthly<-myStocks_returns_monthly%>%
 summary_monthly
 ```
 
-Plot a density plot, using `geom_density()`, for each of the stocks
+***
+
+- Plot a density plot, using `geom_density()`, for each of the stocks
 
 ```{r density_monthly_returns, warning = FALSE}
 
 # YOUR CODE GOES HERE
 density<-ggplot(myStocks_returns_monthly, aes(x=monthly_returns))+
   geom_density()+
-  facet_wrap(vars(symbol), scales="free")
+  facet_wrap(vars(symbol), scales="free")+ #we use free scales per density plot in order to enhance readability.
+  
+  labs(title = "Return Distribution", subtitle = "Density plots on monthly returns", x = "Monthly return", y = "Percentage")
+
 density
 ```
 
-What can you infer from this plot? Which stock is the riskiest? The least risky?
+- What can you infer from this plot? Which stock is the riskiest? The least risky?
 
-> TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
+*From the density plots, one can observe that volatility in monthly return varies widely across the stocks/ETF. For instance, the returns of COW seem to be more evenly distributed than GME, indicating a lower risk when investing into them. In our eyes, GME seems to be the riskiest stock, while an investment into GREK carries the least risk. The latter is understandable as the GREK ETF is diversified and holds shares of the largest and most liquid companies in Greece ([source](https://www.globalxetfs.com/funds/grek/)).*
 
-From the density plots, one can observe that volatility in monthly return varies widely across the stocks/ETF. For instance, the returns of COW seem to be more evenly distributed than GME, indicating a lower risk when investing into them. In our eyes, GME seems to be the riskiest stock, while an investment into SPY carries the least risk. The latter is understandable as the instrument holds shares of all S&P500 companies and is thus more diversified.
+*Looking at the x axis, one can also observe a large difference in the range of monthly returns across the instruments. Interestingly, most of the distribution lies around the 0 mark for all displayed tickers.*
 
-Looking at the x axis, one can also observe a large difference in the range of monthly returns across the instruments. Interestingly, most of the distribution lies around the 0 mark for all displayed tickers.
+***
 
-Finally, make a plot that shows the expected monthly return (mean) of a stock on the Y axis and the risk (standard deviation) in the X-axis. Please use `ggrepel::geom_text_repel()` to label each stock
+- Finally, make a plot that shows the expected monthly return (mean) of a stock on the Y axis and the risk (standard deviation) in the X-axis. Please use `ggrepel::geom_text_repel()` to label each stock
 
 ```{r risk_return_plot, warning = FALSE}
 # YOUR CODE GOES HERE
 scatter_return_volatility <- ggplot(summary_monthly, aes(x=sd_return, y=avg_return, label=symbol))+
   geom_point()+
-  geom_text_repel()
+  geom_smooth(method = "lm", se = F)+ #in this case, we do not want a confidence interval around the regression line
+  geom_text_repel()+
+  
+  labs(title = "Risk vs. Reward", subtitle = "A look at the relationship between the instruments' standard deviation and average monthly return", x = "Standard deviation", y = "Average monthly return")+
+  
+  theme_bw()
+
 scatter_return_volatility
   
 ```
 
-What can you infer from this plot? Are there any stocks which, while being riskier, do not have a higher expected return?
+- What can you infer from this plot? Are there any stocks which, while being riskier, do not have a higher expected return?
 
-> TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
+*Generally, the market seems to reward higher risk with higher return. However, there are minor exceptions in our sample: GREK, indexing the Greek market, has a higher SD than SPY, yet its average monthly return is lower. A good approximation for comparing risk and reward across instruments is the blue linear regression line. Tickers above this line indicate a greater reward for a given risk compared to tickers below that line*
 
-Generally, the market seems to reward higher risk with higher return. However, there are minor exceptions in our sample: GREK, indexing the Greek market, has a higher SD than SPY, yet its average monthly return is lower.
+***
 
 # On your own: IBM HR Analytics
 
